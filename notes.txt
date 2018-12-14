@@ -1,0 +1,17 @@
+TODO:
+1. Embedding - load GloVe vectors
+2. Data loading & processing
+3. Batch generator
+4. Params ("tuning" - basically, start with choosing values that make sense)
+5. Add evaluation during training
+
+
+etc:
+1. Overfitting? Early stopping!
+
+
+Resources:
+1. Code - https://github.com/adeshpande3/LSTM-Sentiment-Analysis/blob/master/Oriole%20LSTM.ipynb (Used some of it)
+	  https://www.kaggle.com/parth05rohilla/sentiment-analysis-using-7-different-techniques/notebook
+
+2. Dataset - https://www.kaggle.com/ynouri/rotten-tomatoes-sentiment-analysis/data
