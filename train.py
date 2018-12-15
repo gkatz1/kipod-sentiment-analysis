@@ -1,16 +1,11 @@
 import tensorflow as tf
 import datetime
+from utils import batch_generator
 
 # params
 NUM_CLASSES = 5
 LSTM_NUM_UNITS = 128
 D_KEEP_PROB = 0.5
-
-
-def batch_generator(data, labels, batch_size):
-    """
-    Generates the next batch
-    """
 
 
 def evaluate():

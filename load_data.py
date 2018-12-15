@@ -165,12 +165,17 @@ def load_data(data_params):
 
     X_train , X_eval , y_train , y_eval = train_test_split(X_values, labels, test_size = TEST_SET_FRACT)
     
+    print X_train.shape, y_train.shape
+    
     # debug
     print "X train:"
     print X_train[0:10]
     print "\n\n"
     print "y train:"
     print y_train[0:10]
+
+
+    return X_train, X_eval, y_train, y_eval
 
 
 def main():
