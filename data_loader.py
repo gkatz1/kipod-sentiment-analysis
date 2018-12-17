@@ -50,7 +50,7 @@ def get_data_params(base_dir_path):
 
     # word_to_num_map
     words_arr = np.load(WORD_TO_NUM_FILE)
-    word_to_num_map = {word: idx for (idx, word) in enumerate(words_arr)}
+    word_to_num_map = {word.decode("UTF-8"): idx for (idx, word) in enumerate(words_arr)}
     params["word_to_num_map"] = word_to_num_map
     
     return params
@@ -96,14 +96,14 @@ def process_inputs(X, data_params):
 
         # debugging
         if idx == 33:
-            print "idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized)
+            print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
             
         processed_X[idx] = integerized
 
     # debugging
-    print "X after processing: "
-    print processed_X[33]
-    print "\n\n"
+    print("X after processing: ")
+    print(processed_X[33])
+    print("\n\n")
 
     return processed_X
 
@@ -113,19 +113,19 @@ def show_stats():
     Print interesting data statistics
     """
     train = pd.read_csv(TRAIN_DATA_PATH, sep='\t')
-    print "Train head"
-    print train.head()
-    print "\n\n"
+    print("Train head")
+    print(train.head())
+    print("\n\n")
 
     test = pd.read_csv(TEST_DATA_PATH, sep='\t')
-    print "Test head"
-    print test.head()
-    print "\n\n"
+    print("Test head")
+    print(test.head())
+    print("\n\n")
 
     class_count = train['Sentiment'].value_counts()
-    print "Class count"
-    print class_count
-    print "\n\n"
+    print("Class count")
+    print(class_count)
+    print("\n\n")
 
     x = np.array(class_count.index)
     y = np.array(class_count.values)
@@ -169,14 +169,14 @@ def load_data(data_params):
 
     X_train , X_eval , y_train , y_eval = train_test_split(X_values, labels, test_size = TEST_SET_FRACT)
     
-    print X_train.shape, y_train.shape
+    print(X_train.shape, y_train.shape)
     
     # debug
-    print "X train:"
-    print X_train[0:10]
-    print "\n\n"
-    print "y train:"
-    print y_train[0:10]
+    print("X train:")
+    print(X_train[0:10])
+    print("\n\n")
+    print("y train:")
+    print(y_train[0:10])
 
 
     return X_train, X_eval, y_train, y_eval
