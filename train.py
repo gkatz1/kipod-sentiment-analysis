@@ -1,6 +1,7 @@
 import tensorflow as tf
 import datetime
 from utils import batch_generator, load_word_vectors
+import data_loader
 
 # params
 NUM_CLASSES = 5
@@ -35,21 +36,30 @@ def train():
     learning_rate = None
     num_epochs = None
     model_save_path = None
+    # How many iterations?
+    iterations = 10000
+    batch_size = 128
     
-    # load Glove / Word2Vec embbeding vectors
+    
+    # ************** Pre-Model **************
+    # Load data
+    data_params = data_loader.get_params()
+    X_train, X_eval, y_train, y_eval = data_loader.load_data(data_params)
+    
+    # Load Glove / Word2Vec embbeding vectors
     word_vectors = load_word_vectors(WORD_VECTORS_PATH)
     
     # Batch generators
-    train_batch_generator = get_next_batch(trainset)
-    test_batch_generator = get_next_batch(testset)
+    train_batch_generator = get_next_batch((X_train, y_train), batch_size)
+    test_batch_generator = get_next_batch((X_eval, y_eval), batch_size)
 
-    # ~~~ Model ~~~
+    # ************** Model **************
     # placeholders
     labels = tf.placeholder(tf.float32, [None, num_classes])
     input_data = tf.placeholder(tf.int32, [None, max_seq_length])
     
     # data processing
-    data = tf.Variable(tf.zeros([batch_size, max_seq_length,
+    data = tf.Variable(tf.zeros([hgb, max_seq_length,
         embedding_num_dims]), dtype=tf.float32)
 
     data = tf.nn.embedding_lookup(word_vectors, input_data)
@@ -88,6 +98,7 @@ def train():
     writer = tf.summary.FileWriter(logdir, sess.graph)
     
     
+    # ************** Train **************
     print("Run 'tensorboard --logdir=./{}' to checkout tensorboard logs.".format(logdir))
     print("==> training")
     

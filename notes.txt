@@ -4,6 +4,7 @@ TODO:
 3. Batch generator
 4. Params ("tuning" - basically, start with choosing values that make sense)
 5. Add evaluation during training
+6. Save best model + params
 
 
 etc:
