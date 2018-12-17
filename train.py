@@ -19,12 +19,7 @@ def evaluate():
     running it on the evaluation set
     """
 
-
-def process_data():
-    """
-    Load data & Process it, returning data that is ready for training / evaluating
-    """
-
+def main():ord2Vec 
 
 def train():
     """
@@ -32,14 +27,13 @@ def train():
     """
     
     # params
-    # T
+    # assigned after loading data
     max_seq_length = None
     keep_prob = 0.5
     n_hidden = 128
     num_classes = 5
     learning_rate = 1e-3
     model_save_path = "models/"
-    # How many iterations?
     iterations = 10000
     batch_size = 128
     word_vector_dim = 50 
@@ -49,8 +43,9 @@ def train():
     data_params = data_loader.get_data_params(DATA_BASE_DIR)
     max_seq_length = data_params["max_seq_length"]
     X_train, X_eval, y_train, y_eval = data_loader.load_data(data_params)
-    
-    # Load Glove / Word2Vec embbeding vectors
+    print("==> Loaded data")    
+  
+    # Load GloVe embbeding vectors
     word_vectors = load_word_vectors(WORD_VECTORS_PATH)
     
     # Batch generators
@@ -116,6 +111,7 @@ def train():
         for iteration in tqdm.tqdm(range(iterations)):
             # shoudn't get exception, but check this
             X, y = next(train_batch_generator)
+            print("current batch size = {}".format(X.shape[0]))
             sess.run(optimizer, {input_data: X, labels: y})
 
             # Write summary
@@ -133,6 +129,8 @@ def train():
 
 
 def main():
+    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+    return
     tf.reset_default_graph()    
     train()
 

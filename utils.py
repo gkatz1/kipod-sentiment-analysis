@@ -27,8 +27,8 @@ def batch_generator(data, batch_size):
                 num_left_to_yield = batch_size - (size - i)
                 
                 i = 0
-                yield (to_yield[0] + X[i:i + num_left_to_yield],
-                    yo_yield[1] + y[i:i + num_left_to_yield])
+                yield (np.concatenate((to_yield[0], X[i:i + num_left_to_yield]), axis=0),
+                    np.concatenate((to_yield[1], y[i:i + num_left_to_yield]), axis=0))
                 i += num_left_to_yield
 
             else:

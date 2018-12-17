@@ -95,15 +95,15 @@ def process_inputs(X, data_params):
             data_params["word_to_num_map"] ,data_params["max_seq_length"])
 
         # debugging
-        if idx == 33:
-            print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
+        ## if idx == 33:
+            ## print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
             
         processed_X[idx] = integerized
 
     # debugging
-    print("X after processing: ")
-    print(processed_X[33])
-    print("\n\n")
+    ## print("X after processing: ")
+    ## print(processed_X[33])
+    ## print("\n\n")
 
     return processed_X
 
@@ -145,8 +145,6 @@ def show_stats():
         test.groupby('SentenceId')['Phrase'].count().mean())
 
 
-# NOTE: data is shifted by +1 (because idexing in the file starts from 1)
-# Fix this
 def load_data(data_params):
     """
     Loads data from data file + Split into train & test
@@ -172,11 +170,11 @@ def load_data(data_params):
     print(X_train.shape, y_train.shape)
     
     # debug
-    print("X train:")
-    print(X_train[0:10])
-    print("\n\n")
-    print("y train:")
-    print(y_train[0:10])
+    ## print("X train:")
+    ## print(X_train[0:10])
+    ## print("\n\n")
+    ## print("y train:")
+    ## print(y_train[0:10])
 
 
     return X_train, X_eval, y_train, y_eval
