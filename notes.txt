@@ -11,7 +11,15 @@ etc:
 
 
 Resources:
-1. Code - https://github.com/adeshpande3/LSTM-Sentiment-Analysis/blob/master/Oriole%20LSTM.ipynb (Used some of it)
-	  https://www.kaggle.com/parth05rohilla/sentiment-analysis-using-7-different-techniques/notebook
+1. Code - (a) https://github.com/adeshpande3/LSTM-Sentiment-Analysis/blob/master/Oriole%20LSTM.ipynb (Used some of it)
+	  (b) https://www.kaggle.com/parth05rohilla/sentiment-analysis-using-7-different-techniques/notebook
 
 2. Dataset - https://www.kaggle.com/ynouri/rotten-tomatoes-sentiment-analysis/data
+
+
+Notes:
+1. Data is biased (class counts: class 2 with 79,582 sentences, class 0 with 7072 sentences)
+
+Questions:
+1. Padding - should we pad to the longest sentence? Maybe better to use only e.g. 80%
+   of the data while cutting the length of the longest sentence by 50%

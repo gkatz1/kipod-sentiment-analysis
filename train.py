@@ -1,12 +1,12 @@
 import tensorflow as tf
 import datetime
-from utils import batch_generator
+from utils import batch_generator, load_word_vectors
 
 # params
 NUM_CLASSES = 5
 LSTM_NUM_UNITS = 128
 D_KEEP_PROB = 0.5
-
+WORD_VECTORS_PATH = "embeddings/word_vectors.npy"
 
 def evaluate():
     """
@@ -37,13 +37,16 @@ def train():
     model_save_path = None
     
     # load Glove / Word2Vec embbeding vectors
-    word_vectors = load_word_vectors("WordVectors")
+    word_vectors = load_word_vectors(WORD_VECTORS_PATH)
+    
+    # Batch generators
+    train_batch_generator = get_next_batch(trainset)
+    test_batch_generator = get_next_batch(testset)
 
+    # ~~~ Model ~~~
     # placeholders
     labels = tf.placeholder(tf.float32, [None, num_classes])
     input_data = tf.placeholder(tf.int32, [None, max_seq_length])
-    
-    init_state = tf.placeholder(tf.float32, [2, None, n_hidden])
     
     # data processing
     data = tf.Variable(tf.zeros([batch_size, max_seq_length,
@@ -64,7 +67,7 @@ def train():
     weight = tf.Variable(tf.truncated_normal([n_hidden, num_classes]))
     bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
 
-    # Let's try this
+    # Let's try this logic
     outputs = tf.transpose(outputs, [1, 0, 2])
     last = tf.gather(outputs, int(outputs.get_shape()[0]) - 1)
     prediction = (tf.matmul(last, weight) + bias)
@@ -83,7 +86,8 @@ def train():
     merged = tf.summary.merge_all()
     logdir = "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
     writer = tf.summary.FileWriter(logdir, sess.graph)
-
+    
+    
     print("Run 'tensorboard --logdir=./{}' to checkout tensorboard logs.".format(logdir))
     print("==> training")
     
@@ -94,7 +98,8 @@ def train():
 
         # Py2.7 or Py3 (if 2.7 --> Change to xrange)
         for iteration in tqdm.tqdm(range(iterations)):
-            input_data, labels = get_train_batch();
+            # shoudn't get exception, but check this
+            input_data, labels = train_batch_generator.next();
             sess.run(optimizer, {input_data: input_data, labels: labels})
 
             # Write summary

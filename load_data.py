@@ -107,7 +107,11 @@ def process_inputs(X, data_params):
 
     return processed_X
 
+
 def show_stats():
+    """
+    Print interesting data statistics
+    """
     train = pd.read_csv(TRAIN_DATA_PATH, sep='\t')
     print "Train head"
     print train.head()

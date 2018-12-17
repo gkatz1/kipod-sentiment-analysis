@@ -8,5 +8,7 @@ def batch_generator(data, labels, batch_size):
     """
     
 
-
+def load_word_vectors(path):
+    word_vectors = np.load(path)
+    return word_vectors
 
