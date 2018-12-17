@@ -106,7 +106,7 @@ def train():
     print("==> training")
     
     
-    best_accuracy = float("inf")
+    best_accuracy = -1
     
     # Train
     with tf.Session() as sess:
@@ -138,7 +138,7 @@ def train():
                     
                 average_accuracy = total_accuracy / eval_iterations
                 print("accuracy = {}".format(average_accuracy))
-                if average_accuracy < best_accuracy:
+                if average_accuracy > best_accuracy:
                     print("Best model!")
                         
                     save_path = saver.save(sess, model_save_path, global_step=iteration)
