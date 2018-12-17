@@ -29,11 +29,12 @@ def train():
     # params
     # assigned after loading data
     max_seq_length = None
+    exp_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
     keep_prob = 0.5
     n_hidden = 128
     num_classes = 5
     learning_rate = 1e-3
-    model_save_path = "models/"
+    model_save_path = os.path.join("models/", exp_name)
     iterations = 10000
     batch_size = 128
     word_vector_dim = 50 
@@ -50,7 +51,7 @@ def train():
     
     # Batch generators
     train_batch_generator = batch_generator((X_train, y_train), batch_size)
-    test_batch_generator = batch_generator((X_eval, y_eval), batch_size)
+    eval_batch_generator = batch_generator((X_eval, y_eval), batch_size)
 
     # ************** Model **************
     # placeholders
@@ -93,17 +94,20 @@ def train():
     tf.summary.scalar('Loss', loss)
     tf.summary.scalar('Accuracy', accuracy)
     merged = tf.summary.merge_all()
-    logdir = "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
-
-    
+    logdir = os.path.join("logs/", exp_name)
     
     # ************** Train **************
     print("Run 'tensorboard --logdir=./{}' to checkout tensorboard logs.".format(os.path.abspath(logdir)))
     print("==> training")
     
+    
+    best_accuracy = float("inf")
+    
     # Train
     with tf.Session() as sess:
-        writer = tf.summary.FileWriter(logdir, sess.graph)
+        train_writer = tf.summary.FileWriter(os.path.join(logdir, "train"))
+        eval_writer = tf.summary.FileWriter(os.path.join(logdir, "evaluation"))
+
         saver = tf.train.Saver()
         sess.run(tf.global_variables_initializer())
 
@@ -112,20 +116,30 @@ def train():
             # shoudn't get exception, but check this
             X, y = next(train_batch_generator)
             print("current batch size = {}".format(X.shape[0]))
-            sess.run(optimizer, {input_data: X, labels: y})
+            sess.run([optimizer], feed_dict={input_data: X, labels: y})
 
             # Write summary
             if (iteration % 30 == 0):
-                summary = sess.run(merged, {input_data: X, labels: y})
-                writer.add_summary(summary, iteration)
+                _summary = sess.run([merged], feed_dict={input_data: X, labels: y})
+                train_writer.add_summary(_summary, iteration)
 
-            # Save the network every 10,000 iterations
-            if (iteration % 10000 == 0 and iteration != 0):
-                save_path = saver.save(sess, model_save_path, global_step=iteration)
-                print("saved to %s" % save_path)
-                
-        writer.close()
-
+            # evaluate the network every 1,000 iterations
+            if (iteration % 1000 == 0 and iteration != 0):
+                for eval_iteration in tqdm.tqdm(range(eval_iteration)):
+                    X, y = next(eval_batch_generator)
+                    _accuracy, _summary = sess.run([accuracy, merged], feed_dict={input_data: X, labels: y})
+                    eval_writer.add_summary(_summary)
+                    
+                    if _accuracy < best_accuracy:
+                        print "Best model!"
+                        
+                        save_path = saver.save(sess, model_save_path, global_step=iteration)
+                        print("saved to %s" % save_path)
+                        
+                        best_accuracy = _accuracy
+        
+        eval_writer.close()
+        train_writer.close()
 
 
 def main():
