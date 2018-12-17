@@ -2,6 +2,7 @@ import os
 import datetime
 import tensorflow as tf
 import numpy as np
+import math
 import tqdm
 from utils import batch_generator, load_word_vectors
 import data_loader
@@ -11,6 +12,8 @@ NUM_CLASSES = 5
 LSTM_NUM_UNITS = 128
 D_KEEP_PROB = 0.5
 DATA_BASE_DIR = "data"
+LOGS_BASE_DIR = "logs"
+MODELS_BASE_DIR = "models"
 WORD_VECTORS_PATH = "embeddings/word_vectors.npy"
 
 def evaluate():
@@ -19,7 +22,6 @@ def evaluate():
     running it on the evaluation set
     """
 
-def main():ord2Vec 
 
 def train():
     """
@@ -29,13 +31,14 @@ def train():
     # params
     # assigned after loading data
     max_seq_length = None
-    exp_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "/"
+    exp_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     keep_prob = 0.5
     n_hidden = 128
     num_classes = 5
     learning_rate = 1e-3
-    model_save_path = os.path.join("models/", exp_name)
-    iterations = 10000
+    model_save_path = os.path.join(MODELS_BASE_DIR, exp_name + '.cpkt')
+    train_iterations = 10000
+    eval_iterations = None
     batch_size = 128
     word_vector_dim = 50 
     
@@ -45,7 +48,9 @@ def train():
     max_seq_length = data_params["max_seq_length"]
     X_train, X_eval, y_train, y_eval = data_loader.load_data(data_params)
     print("==> Loaded data")    
-  
+
+    eval_iterations = math.ceil(float(X_eval.shape[0]) / batch_size)
+
     # Load GloVe embbeding vectors
     word_vectors = load_word_vectors(WORD_VECTORS_PATH)
     
@@ -87,17 +92,17 @@ def train():
 
     # Metrics
     # Should we reduce_mean?
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=labels))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=labels))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
     
     # Summaries
     tf.summary.scalar('Loss', loss)
     tf.summary.scalar('Accuracy', accuracy)
     merged = tf.summary.merge_all()
-    logdir = os.path.join("logs/", exp_name)
+    logdir = os.path.join(LOGS_BASE_DIR, exp_name, "")
     
     # ************** Train **************
-    print("Run 'tensorboard --logdir=./{}' to checkout tensorboard logs.".format(os.path.abspath(logdir)))
+    print("Run 'tensorboard --logdir={}' to checkout tensorboard logs.".format(os.path.abspath(logdir)))
     print("==> training")
     
     
@@ -112,39 +117,40 @@ def train():
         sess.run(tf.global_variables_initializer())
 
         # Py2.7 or Py3 (if 2.7 --> Change to xrange)
-        for iteration in tqdm.tqdm(range(iterations)):
+        for iteration in tqdm.tqdm(range(train_iterations)):
             # shoudn't get exception, but check this
             X, y = next(train_batch_generator)
-            print("current batch size = {}".format(X.shape[0]))
             sess.run([optimizer], feed_dict={input_data: X, labels: y})
 
             # Write summary
             if (iteration % 30 == 0):
-                _summary = sess.run([merged], feed_dict={input_data: X, labels: y})
+                _summary, = sess.run([merged], feed_dict={input_data: X, labels: y})
                 train_writer.add_summary(_summary, iteration)
 
             # evaluate the network every 1,000 iterations
-            if (iteration % 1000 == 0 and iteration != 0):
-                for eval_iteration in tqdm.tqdm(range(eval_iteration)):
+            if (iteration % 10 == 0 and iteration != 0):
+                total_accuracy = 0
+                for eval_iteration in tqdm.tqdm(range(eval_iterations)):
                     X, y = next(eval_batch_generator)
                     _accuracy, _summary = sess.run([accuracy, merged], feed_dict={input_data: X, labels: y})
-                    eval_writer.add_summary(_summary)
+                    total_accuracy += _accuracy
+                    # eval_writer.add_summary(_summary, eval_iteration)
                     
-                    if _accuracy < best_accuracy:
-                        print "Best model!"
+                average_accuracy = total_accuracy / eval_iterations
+                print("accuracy = {}".format(average_accuracy))
+                if average_accuracy < best_accuracy:
+                    print("Best model!")
                         
-                        save_path = saver.save(sess, model_save_path, global_step=iteration)
-                        print("saved to %s" % save_path)
+                    save_path = saver.save(sess, model_save_path, global_step=iteration)
+                    print("saved to %s" % save_path)
                         
-                        best_accuracy = _accuracy
+                    best_accuracy = average_accuracy
         
         eval_writer.close()
         train_writer.close()
 
 
 def main():
-    sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-    return
     tf.reset_default_graph()    
     train()
 
