@@ -1,3 +1,4 @@
+import sys
 import os
 import datetime
 import tensorflow as tf
@@ -21,7 +22,6 @@ def evaluate():
     Given model & params - evaluate model's performance by
     running it on the evaluation set
     """
-
 
 def train():
     """
@@ -72,7 +72,7 @@ def train():
     # lstm cell
     lstm_cell = tf.nn.rnn_cell.LSTMCell(n_hidden)
     lstm_cell = tf.nn.rnn_cell.DropoutWrapper(cell=lstm_cell, output_keep_prob=keep_prob)
-    # Do we need the state tuple? Because we don't want out cell to bi
+    # Do we need the state tuple? Because we don't want the cell to be
     # initialized with the state from previous sentence
     ## rnn_tuple_state = tf.nn.rnn_cell.LSTMStateTuple(init_state[0], init_state[1])
 
@@ -83,7 +83,7 @@ def train():
     bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
 
     # Let's try this logic
-    outputs = tf.transpose(outputs, [1, 0, 2])
+    outputs = tf.transpose(outputs, [1, 0, 2]) # max_seq_length, batch_size, word_vector_dim
     last = tf.gather(outputs, int(outputs.get_shape()[0]) - 1)
     prediction = (tf.matmul(last, weight) + bias)
 
@@ -119,7 +119,10 @@ def train():
         # Py2.7 or Py3 (if 2.7 --> Change to xrange)
         for iteration in tqdm.tqdm(range(train_iterations)):
             # shoudn't get exception, but check this
+            # pass also
             X, y = next(train_batch_generator)
+            X_lengths = get_lengths(X)
+            sys.exit(1)
             sess.run([optimizer], feed_dict={input_data: X, labels: y})
 
             # Write summary
@@ -134,8 +137,7 @@ def train():
                     X, y = next(eval_batch_generator)
                     _accuracy, _summary = sess.run([accuracy, merged], feed_dict={input_data: X, labels: y})
                     total_accuracy += _accuracy
-                    # eval_writer.add_summary(_summary, eval_iteration)
-                    
+            
                 average_accuracy = total_accuracy / eval_iterations
                 print("accuracy = {}".format(average_accuracy))
                 if average_accuracy > best_accuracy:
