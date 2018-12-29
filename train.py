@@ -9,7 +9,7 @@ import data_loader
 
 # params
 NUM_CLASSES = 5
-LSTM_NUM_UNITS = 128
+LSTM_NUM_UNITS = 64
 D_KEEP_PROB = 0.5
 DATA_BASE_DIR = "data"
 LOGS_BASE_DIR = "logs"
@@ -106,7 +106,7 @@ def train():
     print("==> training")
     
     
-    best_accuracy = float("inf")
+    best_accuracy = -1
     
     # Train
     with tf.Session() as sess:
@@ -128,7 +128,7 @@ def train():
                 train_writer.add_summary(_summary, iteration)
 
             # evaluate the network every 1,000 iterations
-            if (iteration % 10 == 0 and iteration != 0):
+            if (iteration % 1000 == 0 and iteration != 0):
                 total_accuracy = 0
                 for eval_iteration in tqdm.tqdm(range(eval_iterations)):
                     X, y = next(eval_batch_generator)
@@ -138,7 +138,7 @@ def train():
                     
                 average_accuracy = total_accuracy / eval_iterations
                 print("accuracy = {}".format(average_accuracy))
-                if average_accuracy < best_accuracy:
+                if average_accuracy > best_accuracy:
                     print("Best model!")
                         
                     save_path = saver.save(sess, model_save_path, global_step=iteration)
