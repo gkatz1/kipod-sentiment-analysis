@@ -34,9 +34,42 @@ def batch_generator(data, batch_size):
             else:
                 i = 0
 
-    
 
 def load_word_vectors(path):
     word_vectors = np.load(path)
     return word_vectors
+
+
+def find_first_occ(arr, target_val):
+    """
+    Returns first occurrence of target_val in arr
+    
+    :param arr: array to search target_val in
+    :param target_val: value to search its first occurrence in arr
+    :return: index of 1st occurrence of target_val in arr (if no such occurrence return -1)
+    """
+    for idx, val in enumerate(arr):
+        if val == target_val:
+            return idx
+
+    return -1
+
+
+def get_lengths(X, padd_value):
+    """
+    Returns the lengths of the unpadded vector for each vector in X
+    
+    :param X: array of arrays to calculate their lengths
+    :param padd_value: padding value
+    :return: lengths of unpadded parts in arrays of X
+    """
+    lengths = []
+    for x in X:
+        length = find_first_occ(x, padd_value)
+        if length == -1:
+            length = max(x.shape)
+        lengths.append(length)
+
+    return lengths
+
 

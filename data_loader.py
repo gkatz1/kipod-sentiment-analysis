@@ -16,7 +16,7 @@ TEST_SET_FRACT = 0.2
 STRIP_SPECIAL_CHARS = re.compile("[^A-Za-z0-9 ]+")
 UNKOWN_WORD = 399999
 WORD_TO_NUM_FILE = "embeddings/word_to_num.npy"
-
+DEBUG = True
 
 # ~~ Helpers ~~
 def clean_sentence(string):
@@ -94,16 +94,11 @@ def process_inputs(X, data_params):
         integerized = integerize_sentence(sentence,
             data_params["word_to_num_map"] ,data_params["max_seq_length"])
 
-        # debugging
-        ## if idx == 33:
-            ## print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
+        if DEBUG:
+            if idx == 33:
+                print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
             
         processed_X[idx] = integerized
-
-    # debugging
-    ## print("X after processing: ")
-    ## print(processed_X[33])
-    ## print("\n\n")
 
     return processed_X
 
@@ -159,23 +154,32 @@ def load_data(data_params):
     X_values = train['Phrase']
     labels_values = train.Sentiment.values
     
+    if DEBUG:
+        print "X_Values.shape = {}".format(X_values.shape)
+        print "labels_values = {}".format(labels_values.shape)
+        idx = 123
+        print "idx = {}: {} --> {}".format(idx, X_values[idx], labels_values[idx])
+    
     X_values = process_inputs(X_values, data_params)
     
     # Convert into one hot vectors
     labels = np.zeros((len(labels_values), NUM_CLASSES))
     labels[np.arange(len(labels_values)), labels_values] = 1
-
+    if DEBUG:
+        idx = 125584
+        print "idx = {}: X_Values[33] = {} --> labels[33] = {}".format(
+        idx, X_values[idx], labels[idx])
+    
     X_train , X_eval , y_train , y_eval = train_test_split(X_values, labels, test_size = TEST_SET_FRACT)
     
-    print(X_train.shape, y_train.shape)
-    
-    # debug
-    ## print("X train:")
-    ## print(X_train[0:10])
-    ## print("\n\n")
-    ## print("y train:")
-    ## print(y_train[0:10])
-
+    if DEBUG:
+        print "X_train.shape = {}, y_train.shape = {}".format(
+            X_train.shape, y_train.shape)
+        print "X_test.shape = {}, y_test.shape = {}".format(
+            X_eval.shape, y_eval.shape)
+            
+        idx = 5
+        print "Eval: idx = {} | {} --> {}".format(idx, X_eval[idx], y_eval[idx])
 
     return X_train, X_eval, y_train, y_eval
 
@@ -183,6 +187,21 @@ def load_data(data_params):
 def main():
     data_params = get_data_params(BASE_DIR)
     # show_stats()
+    if DEBUG:
+        # word to idx
+        word = 'brush'
+        print "word_to_num_map['{}'] = {}".format(
+            word, data_params['word_to_num_map'][word])
+    
+        # idxs to words
+        words_arr = np.load(WORD_TO_NUM_FILE)
+        nums = [29, 19612, 1069, 641, 740, 15860] #3
+        print "Num to Word:"
+        for num in nums:
+            print "{} --> {}".format(num, words_arr[num])
+
+    
+
     load_data(data_params)
 
 
