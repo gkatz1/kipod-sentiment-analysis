@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import math
 import tqdm
-from utils import batch_generator, load_word_vectors
+from utils import batch_generator, load_word_vectors, get_lengths
 import data_loader
 
 # params
@@ -16,6 +16,9 @@ DATA_BASE_DIR = "data"
 LOGS_BASE_DIR = "logs"
 MODELS_BASE_DIR = "models"
 WORD_VECTORS_PATH = "embeddings/word_vectors.npy"
+PADD_VAL = 0
+DEBUG = False
+
 
 def evaluate():
     """
@@ -33,14 +36,14 @@ def train():
     max_seq_length = None
     exp_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     keep_prob = 0.5
-    n_hidden = 128
+    n_hidden = 64
     num_classes = 5
     learning_rate = 1e-3
     model_save_path = os.path.join(MODELS_BASE_DIR, exp_name + '.cpkt')
-    train_iterations = 10000
+    train_iterations = 100000
     eval_iterations = None
-    batch_size = 128
-    word_vector_dim = 50 
+    batch_size = 24
+    word_vector_dim = 300 
     
     # ************** Pre-Model **************
     # Load data
@@ -62,7 +65,8 @@ def train():
     # placeholders
     labels = tf.placeholder(tf.float32, [None, num_classes])
     input_data = tf.placeholder(tf.int32, [None, max_seq_length])
-    
+    input_data_lengths = tf.placeholder(tf.int32, batch_size) 
+
     # data processing
     data = tf.Variable(tf.zeros([batch_size, max_seq_length,
         word_vector_dim]), dtype=tf.float32)
@@ -76,7 +80,7 @@ def train():
     # initialized with the state from previous sentence
     ## rnn_tuple_state = tf.nn.rnn_cell.LSTMStateTuple(init_state[0], init_state[1])
 
-    outputs, _ = tf.nn.dynamic_rnn(lstm_cell, data, dtype=tf.float32)
+    outputs, _ = tf.nn.dynamic_rnn(lstm_cell, data, dtype=tf.float32, sequence_length=input_data_lengths)
     
     # output layer
     weight = tf.Variable(tf.truncated_normal([n_hidden, num_classes]))
@@ -121,13 +125,20 @@ def train():
             # shoudn't get exception, but check this
             # pass also
             X, y = next(train_batch_generator)
-            X_lengths = get_lengths(X)
-            sys.exit(1)
-            sess.run([optimizer], feed_dict={input_data: X, labels: y})
+            X_lengths = get_lengths(X, PADD_VAL)
+            if DEBUG:
+                print("X.shape = {}, X_lengths.shape = {}".format(X.shape, X_lengths.shape))
+                print("type(X) = {}, type(X_lengths) = {}".format(X.dtype, X_lengths.dtype))
+                idx = 3
+                print("X[:{0}], X_length[:{0}]".format(idx))
+                print(X[:idx])
+                print(X_lengths[:idx])
+
+            sess.run([optimizer], feed_dict={input_data: X, labels: y, input_data_lengths: X_lengths})
 
             # Write summary
             if (iteration % 30 == 0):
-                _summary, = sess.run([merged], feed_dict={input_data: X, labels: y})
+                _summary, = sess.run([merged], feed_dict={input_data: X, labels: y, input_data_lengths: X_lengths})
                 train_writer.add_summary(_summary, iteration)
 
             # evaluate the network every 1,000 iterations
@@ -135,7 +146,9 @@ def train():
                 total_accuracy = 0
                 for eval_iteration in tqdm.tqdm(range(eval_iterations)):
                     X, y = next(eval_batch_generator)
-                    _accuracy, _summary = sess.run([accuracy, merged], feed_dict={input_data: X, labels: y})
+                    X_lengths = get_lengths(X, PADD_VAL)
+                    _accuracy, _summary = sess.run([accuracy, merged], feed_dict={input_data: X, labels: y, 
+                        input_data_lengths: X_lengths})
                     total_accuracy += _accuracy
             
                 average_accuracy = total_accuracy / eval_iterations

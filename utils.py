@@ -61,15 +61,19 @@ def get_lengths(X, padd_value):
     
     :param X: array of arrays to calculate their lengths
     :param padd_value: padding value
-    :return: lengths of unpadded parts in arrays of X
+    :return: numpy array of lengths of unpadded parts in arrays of X
     """
+    return np.argmax(X == 0, axis=1)
+
     lengths = []
     for x in X:
-        length = find_first_occ(x, padd_value)
-        if length == -1:
+        # length = find_first_occ(x, padd_value)
+        length = np.argmax(x == 0)
+        if length == 0 and x[0] != 0:
+        # if length == -1:
             length = max(x.shape)
         lengths.append(length)
 
-    return lengths
+    return np.array(lengths)
 
 
