@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import math
 import tqdm
-from utils import batch_generator, load_word_vectors, get_lengths
+from utils import batch_generator, load_word_vectors, get_lengths, batch_generator_uniform_prob
 import data_loader
 
 # params
@@ -19,6 +19,13 @@ WORD_VECTORS_PATH = "embeddings/word_vectors.npy"
 PADD_VAL = 0
 DEBUG = False
 
+# tests
+# test results without dynamic_rnn's copy-through state 
+DYN_RNN_COPY_THROUGH_STATE = True
+# test Dropout
+USE_DROPOUT = False
+# test uniform distribution batch generation
+USE_ONE_HOT_LABELS = False
 
 def evaluate():
     """
@@ -49,7 +56,7 @@ def train():
     # Load data
     data_params = data_loader.get_data_params(DATA_BASE_DIR)
     max_seq_length = data_params["max_seq_length"]
-    X_train, X_eval, y_train, y_eval = data_loader.load_data(data_params)
+    X_train, X_eval, y_train, y_eval = data_loader.load_data(data_params, one_hot_labels=USE_ONE_HOT_LABELS)
     print("==> Loaded data")    
 
     eval_iterations = math.ceil(float(X_eval.shape[0]) / batch_size)
@@ -58,8 +65,8 @@ def train():
     word_vectors = load_word_vectors(WORD_VECTORS_PATH)
     
     # Batch generators
-    train_batch_generator = batch_generator((X_train, y_train), batch_size)
-    eval_batch_generator = batch_generator((X_eval, y_eval), batch_size)
+    train_batch_generator = batch_generator_uniform_prob((X_train, y_train), batch_size, num_classes)
+    eval_batch_generator = batch_generator_uniform_prob((X_eval, y_eval), batch_size, num_classes)
 
     # ************** Model **************
     # placeholders
@@ -75,12 +82,16 @@ def train():
 
     # lstm cell
     lstm_cell = tf.nn.rnn_cell.LSTMCell(n_hidden)
-    lstm_cell = tf.nn.rnn_cell.DropoutWrapper(cell=lstm_cell, output_keep_prob=keep_prob)
+    if USE_DROPOUT:
+        lstm_cell = tf.nn.rnn_cell.DropoutWrapper(cell=lstm_cell, output_keep_prob=keep_prob)
     # Do we need the state tuple? Because we don't want the cell to be
     # initialized with the state from previous sentence
     ## rnn_tuple_state = tf.nn.rnn_cell.LSTMStateTuple(init_state[0], init_state[1])
 
-    outputs, _ = tf.nn.dynamic_rnn(lstm_cell, data, dtype=tf.float32, sequence_length=input_data_lengths)
+    if DYN_RNN_COPY_THROUGH_STATE:
+        outputs, _ = tf.nn.dynamic_rnn(lstm_cell, data, dtype=tf.float32, sequence_length=input_data_lengths)
+    else:
+        outputs, _ = tf.nn.dynamic_rnn(lstm_cell, data, dtype=tf.float32)
     
     # output layer
     weight = tf.Variable(tf.truncated_normal([n_hidden, num_classes]))
@@ -128,6 +139,7 @@ def train():
             X_lengths = get_lengths(X, PADD_VAL)
             if DEBUG:
                 print("X.shape = {}, X_lengths.shape = {}".format(X.shape, X_lengths.shape))
+                print("y.shape = {}".format(y.shape))
                 print("type(X) = {}, type(X_lengths) = {}".format(X.dtype, X_lengths.dtype))
                 idx = 3
                 print("X[:{0}], X_length[:{0}]".format(idx))

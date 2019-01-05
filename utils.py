@@ -1,5 +1,8 @@
+import sys
 import numpy as np
+import random
 
+DEBUG = False
 
 # How to generate batch?
 # Do we want to naively iterate through all examples
@@ -33,6 +36,73 @@ def batch_generator(data, batch_size):
 
             else:
                 i = 0
+
+        
+def batch_generator_uniform_prob(data, batch_size, num_classes):
+    """
+    Generates the next batch
+    """
+    X, y, cls_ranges = sort_data(data, num_classes)
+
+    if DEBUG:
+        print("cls_ranges = {}".format(cls_ranges))
+
+    if X.shape[0] != y.shape[0]:
+        raise Exception("non matching dimensions for X ({}) and y ({})".format(
+            X.shape[0], y.shape[0]))
+
+    size = X.shape[0]
+    
+    i = 0
+    while True:
+        # X.shape[1] is max_seq_length
+        Xs = np.zeros((batch_size, X.shape[1]))
+        ys = np.zeros((batch_size, num_classes))
+        if DEBUG:
+            print(X.shape)
+            print(Xs.shape)
+
+        for i in range(batch_size):
+            label = i % num_classes
+            start, end = cls_ranges[label]
+            rand_idx = random.randint(start, end)
+            Xs[i,:] = X[rand_idx,:]
+            ys[i][label] = 1
+
+            if DEBUG:
+                print("[batch_generator_uniform_prob()], i = {}, range = {}, randint = {}".format(
+                    i, cls_ranges[label], rand_idx))
+                # print(Xs[i], ys[i])
+
+
+        yield Xs, ys
+
+
+def sort_data(data, num_classes):
+    """
+    Sorts the given data by labels
+
+    :return: (X, y) sorted by labels (0,1,2,3...) and list containing
+             index ranges for each class
+    """
+    X, y = data
+    if DEBUG:
+        print("[sort_data()], y.shape = {}".format(y.shape))
+
+    sorted_indices = np.argsort(y)
+    X = X[sorted_indices]
+    y = y[sorted_indices]
+
+    cls_ranges = []
+    start = 0
+    for cls in range(num_classes):
+        end = np.argmax(y == (cls + 1))
+        if cls == num_classes -1:
+            end = len(y)    
+        cls_ranges.append((start, end-1))
+        start = end
+
+    return X, y, cls_ranges
 
 
 def load_word_vectors(path):

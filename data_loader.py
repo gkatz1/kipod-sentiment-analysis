@@ -18,7 +18,7 @@ UNKOWN_WORD = 399999
 WORD_TO_NUM_FILE = "embeddings/word_to_num.npy"
 DEBUG = False
 TEST_LOSS_CONVERGENCE = True
-TEST_CONVERGENCE_NUM_EXAMPLES = 100
+TEST_CONVERGENCE_NUM_EXAMPLES = 10000
 
 # ~~ Helpers ~~
 def clean_sentence(string):
@@ -47,7 +47,8 @@ def get_data_params(base_dir_path):
     train = pd.read_csv(train_path, sep='\t')
     test = pd.read_csv(test_path, sep='\t')
     
-    params["max_seq_length"] = max(train.Phrase.str.len().max(), test.Phrase.str.len().max())
+    # params["max_seq_length"] = max(train.Phrase.str.len().max(), test.Phrase.str.len().max())
+    params["max_seq_length"] = 250
 
 
     # word_to_num_map
@@ -72,6 +73,8 @@ def integerize_sentence(sentence, word_to_num_map, max_seq_len):
     splitted = sentence.split()
     
     for (idx, word) in enumerate(splitted):
+        if idx > max_seq_len:
+            break
         try:
             integerized[idx] = word_to_num_map[word]
         except KeyError:
@@ -95,7 +98,7 @@ def process_inputs(X, data_params):
     for idx, sentence in enumerate(X):
         integerized = integerize_sentence(sentence,
             data_params["word_to_num_map"] ,data_params["max_seq_length"])
-
+       
         if DEBUG:
             if idx == 33:
                 print("idx = {} sentence = {}, integerized = {}".format(idx, sentence, integerized))
@@ -142,7 +145,7 @@ def show_stats():
         test.groupby('SentenceId')['Phrase'].count().mean())
 
 
-def load_data(data_params):
+def load_data(data_params, one_hot_labels=True):
     """
     Loads data from data file + Split into train & test
     
@@ -169,8 +172,12 @@ def load_data(data_params):
     X_values = process_inputs(X_values, data_params)
     
     # Convert into one hot vectors
-    labels = np.zeros((len(labels_values), NUM_CLASSES))
-    labels[np.arange(len(labels_values)), labels_values] = 1
+    if one_hot_labels:
+        labels = np.zeros((len(labels_values), NUM_CLASSES))
+        labels[np.arange(len(labels_values)), labels_values] = 1
+    else:
+        labels = labels_values
+
     if DEBUG:
         idx = 125584
         print("idx = {}: X_Values[33] = {} --> labels[33] = {}".format(
